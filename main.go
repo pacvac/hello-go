@@ -44,6 +44,12 @@ func main() {
 		fmt.Fprintf(w, html)
 	})
 
+	// Health check endpoint
+	http.HandleFunc("/up", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, "OK")
+	})
+
 	fmt.Println("Server starting on port 8080...")
 	http.ListenAndServe(":8080", nil)
 }
