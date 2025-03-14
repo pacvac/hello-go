@@ -2,11 +2,30 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+	"time"
 )
 
+// LoggingMiddleware logs information about each incoming request
+func LoggingMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		startTime := time.Now()
+		log.Printf("[REQUEST] %s %s - Started", r.Method, r.URL.Path)
+
+		next(w, r)
+
+		duration := time.Since(startTime)
+		log.Printf("[REQUEST] %s %s - Completed in %v", r.Method, r.URL.Path, duration)
+	}
+}
+
 func main() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	// Configure logging
+	log.SetFlags(log.Ldate | log.Ltime)
+	log.Println("Starting server...")
+
+	http.HandleFunc("/", LoggingMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		html := `<!DOCTYPE html>
 <html>
 <head>
@@ -40,16 +59,16 @@ func main() {
     </div>
 </body>
 </html>`
-		
+
 		fmt.Fprintf(w, html)
-	})
+	}))
 
 	// Health check endpoint
-	http.HandleFunc("/up", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/up", LoggingMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintf(w, "OK")
-	})
+	}))
 
-	fmt.Println("Server starting on port 8080...")
+	log.Println("Server starting on port 8080...")
 	http.ListenAndServe(":8080", nil)
 }
